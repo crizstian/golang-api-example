@@ -1,0 +1,208 @@
+#%RAML 1.0
+title: EasyCast
+version: v1
+baseUri: v1
+mediaType: application/json
+documentation:
+  - title: Overview
+    content: This is an example of EasyCast API service
+
+securitySchemes:
+  JWTAuth:
+    description: Each request must contain the headers the jwt for authorization
+    type: x-jwt
+    describedBy:
+      headers:
+          X-HD-Access-Token:
+              description: |
+                 Valid jwt token
+              example: |
+                eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWV9.TJVA95OrM7E2cBab30RMHrHDcEfxjoYZgeFONFh7HgQ
+      responses:
+          401:
+            description: |
+                  Bad or expired token.
+          403:
+            description: |
+                Access denied not valid privilage in resurces
+
+types:
+  User:
+    properties:
+      name: string
+      role: string
+      lastname: string
+      email: string
+      status: number
+      accountId?: string
+
+  UserRegistration:
+    properties:
+      email: string
+      pass: string
+      role: number
+
+  UserProfile:
+    properties:
+      id: string
+      name: string
+      lastname: string
+      email: string
+      phone: string
+      country: number
+      timezone: number
+      currentPass: string
+      newPass: string
+
+  CompanyProfile:
+    properties:
+      ID: number
+      name: string
+      active: number
+      logo_url: string
+      address: string
+      phone: string
+      country: number
+
+  Token:
+    properties:
+      email: string
+      role: number
+      iat: datetime
+      exp: datetime
+
+  UserLogin:
+    properties:
+      email: string
+      pass: string
+
+####################################################
+#         ENDPOINTS
+####################################################
+
+/account:
+  /user:
+    post:
+      description: Creates a new user and returns a valid token
+      body:
+        application/json:
+          type: UserRegistration
+
+    /profile:
+      /{user_id}:
+        securedBy: [JWTAuth]
+        get:
+          description: Returns a user's information by `{user_id}`
+          responses:
+            200:
+              body:
+                application/json:
+                  type: UserProfile
+
+####################################################
+
+/auth:
+  /login:
+    post:
+      description: Requires a Login Object type to generate a token and signin in the platform
+      body:
+        application/json:
+          type: UserLogin
+      responses:
+        201:
+          body:
+            application/json:
+              type: Token
+  /register:
+    post:
+      description: Registers a new user
+      body:
+        application/json:
+          type: UserRegistration
+      responses:
+        201:
+          body:
+            application/json:
+              type: Token
+  /active:
+    /{code}:
+      get:
+        description: Activates a user account with an activation `{code}`
+        responses:
+          201:
+            body:
+              application/json:
+                type: Token
+
+
+####################################################
+
+/timezone:
+  get:
+    description: Gets a time zone list
+    responses:
+      200:
+        body:
+          application/json:
+            example: |
+              {
+                "timezone": [
+                  {
+                    "ID": 1,
+                    "timezone": "(GMT - 6:00 hours) Central Time (US & Canada), Mexico City"
+                  },
+                  {
+                    "ID": 2,
+                    "timezone": "(GMT - 5:00 hours) Eastern Time (US & Canada), Bogota, Lima, Quito"
+                  }
+                ]
+              }
+
+####################################################
+
+####################################################
+# /analytics/logs/bandwidth/time/
+
+/analytics:
+  /logs:
+    /bandwidth:
+      securedBy: [JWTAuth]
+      get:
+        queryParameters:
+          startTime: string
+          endTime: string
+        description: returns the bandwith used from a customer by the specified interval time
+        responses:
+          200:
+            body:
+              application/json:
+                example: |
+                  {
+                    "result": [{
+                      ...
+                      ...
+                      ...
+                    }],
+                    "success": true | false
+                  }
+
+  /locations:
+    securedBy: [JWTAuth]
+    get:
+      queryParameters:
+        startTime: string
+        endTime: string
+      description: returns the locations from where the media was consumed and served
+      responses:
+        200:
+          body:
+            application/json:
+              example: |
+                {
+                  "result": [{
+                    ...
+                    ...
+                    ...
+                  }],
+                  "success": true | false
+                }
